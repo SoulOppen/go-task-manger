@@ -20,7 +20,13 @@ var user User
 
 func main() {
 	userName := welcome()
-	user.setUser("129192", userName, "ajsknajsdjk")
-	fmt.Println("Welcome,", userName)
-	fmt.Println(user)
+	for {
+		if user.coin == "" {
+			user.setUser("129192", userName, "ajsknajsdjk")
+		} else {
+			fmt.Println("Welcome,", userName)
+			fmt.Println(user)
+			break
+		}
+	}
 }
