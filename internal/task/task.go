@@ -6,7 +6,7 @@ import (
 
 type Task struct {
 	ID      string  `json:"id"`
-	Proyect *string `json:"project,omitempty"`
+	Project *string `json:"project"`
 	Name    string  `json:"name"`
 }
 
