@@ -22,7 +22,10 @@ to quickly create a Cobra application.`,
 		signup, _ := cmd.Flags().GetBool("signup")
 		if signup {
 			auth.SignUp()
+		} else {
+			auth.Login()
 		}
+
 	},
 }
 
