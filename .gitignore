@@ -11,7 +11,7 @@
 /bin/
 /build/
 /dist/
-
+/out/
 # Go workspace
 /go.work
 /go.work.sum

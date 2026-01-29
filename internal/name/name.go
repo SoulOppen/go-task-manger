@@ -1,16 +1,20 @@
 package name
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
 
-func Name() (string, error) {
+func Name() string {
 	err := godotenv.Load()
-	if err == nil {
-		return "", err
+	if err != nil {
+		fmt.Print("No se pudo cargar env")
+		os.Exit(1)
 	}
 	name := os.Getenv("NAME")
-	return name, nil
+	name = strings.ReplaceAll(name, " ", "-")
+	return name
 }
