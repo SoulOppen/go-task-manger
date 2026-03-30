@@ -11,7 +11,7 @@ Estructura actual relevante:
 - `internal/db/`: conexion MySQL y migracion (`tasks` + `users`).
 - `internal/auth/`: login/signup/switch contra MySQL; quick-connect auxiliar en disco.
 - `internal/task/`: modelo `Task` y salida de tareas.
-- `internal/name/`: delegado a `internal/config` para el nombre del CLI.
+- `internal/config/`: nombre y version del CLI (`DefaultName`, `DefaultVersion`), carga de `.env`.
 
 ## Reglas de trabajo para agentes
 
