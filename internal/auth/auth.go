@@ -22,7 +22,7 @@ func leerUsuarios() []string {
 
 	data, err := os.ReadFile(dir)
 	if err != nil {
-		return []string{} // archivo no existe aún
+		return []string{}
 	}
 
 	return strings.FieldsFunc(string(data), func(r rune) bool {

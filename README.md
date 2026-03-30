@@ -25,11 +25,13 @@
 
 ### Pasos para instalar
 
-1.  Bashgit clone https://github.com/tu-usuario/go-task-manager.git
-    
-2.  Bashcd go-task-manager
-    
-3.  Bashgo build -o gtm main.go
+1.  Clona el repositorio:
+    `git clone https://github.com/tu-usuario/go-task-manager.git`
+2.  Entra al proyecto:
+    `cd go-task-manager`
+3.  Usa el instalador segun tu sistema operativo:
+    - Linux/macOS: `bash scripts/install.sh`
+    - Windows (PowerShell): `powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1`
     
 
 📂 Estructura del Proyecto
@@ -50,6 +52,11 @@ El proyecto sigue una estructura modular para facilitar su mantenimiento:
 Una vez compilado, puedes usar los siguientes comandos:
 
 **ComandoDescripciónEjemplo**addAñade una nueva tarea./gtm add "Estudiar Go"listMuestra todas las tareas./gtm listdoMarca una tarea como completada./gtm do 1rmElimina una tarea de la lista./gtm rm 2
+
+Si usaste los scripts de instalacion, el binario queda en:
+
+- Linux/macOS: `./bin/gtm`
+- Windows: `.\bin\gtm.exe`
 
 🔧 Stack Tecnológico
 --------------------
