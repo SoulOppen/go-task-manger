@@ -10,8 +10,8 @@ import (
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Inicia sesion de usuario",
-	Long:  "Permite iniciar sesion o registrar un usuario con --signup (requiere MySQL).",
+	Short: "Iniciar sesion",
+	Long:  "Abre sesion o registra con --signup (MySQL activo).",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		signup, err := cmd.Flags().GetBool("signup")
 		if err != nil {

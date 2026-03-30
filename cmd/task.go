@@ -32,12 +32,12 @@ var (
 
 var taskCmd = &cobra.Command{
 	Use:   "task",
-	Short: "CRUD de tareas (MySQL)",
+	Short: "Gestionar tareas",
 }
 
 var taskAddCmd = &cobra.Command{
 	Use:   "add",
-	Short: "Crea una tarea",
+	Short: "Crear tarea",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if shouldPromptAdd(cmd) {
 			var err error
@@ -67,7 +67,7 @@ var taskAddCmd = &cobra.Command{
 
 var taskListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "Lista tareas por relevancia y fecha de entrega",
+	Short: "Listar tareas",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return withTaskRepo(cmd.Context(), func(repo *task.Repository) error {
 			tasks, err := repo.ListOrdered(cmd.Context())
@@ -94,7 +94,7 @@ var taskListCmd = &cobra.Command{
 
 var taskGetCmd = &cobra.Command{
 	Use:   "get [id]",
-	Short: "Muestra una tarea por id",
+	Short: "Ver detalle de tarea",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := resolveTaskID(args, cmd.InOrStdin(), cmd.OutOrStdout())
@@ -127,7 +127,7 @@ var (
 
 var taskUpdateCmd = &cobra.Command{
 	Use:   "update [id]",
-	Short: "Actualiza una tarea",
+	Short: "Actualizar tarea",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := resolveTaskID(args, cmd.InOrStdin(), cmd.OutOrStdout())
@@ -175,7 +175,7 @@ var taskUpdateCmd = &cobra.Command{
 
 var taskDeleteCmd = &cobra.Command{
 	Use:   "delete [id]",
-	Short: "Elimina una tarea",
+	Short: "Eliminar tarea",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := resolveTaskID(args, cmd.InOrStdin(), cmd.OutOrStdout())

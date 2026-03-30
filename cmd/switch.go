@@ -10,8 +10,8 @@ import (
 
 var switchCmd = &cobra.Command{
 	Use:   "switch",
-	Short: "Cambia de usuario activo",
-	Long:  "Solicita credenciales y cambia la sesion al usuario autenticado (requiere MySQL).",
+	Short: "Cambiar de usuario",
+	Long:  "Login como otro usuario (MySQL activo).",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return db.WithDB(cmd.Context(), func(d *sql.DB) error {
 			store := auth.NewMySQLUserStore(d)

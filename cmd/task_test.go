@@ -18,7 +18,7 @@ func TestTaskListHelpDoesNotRequireMySQL(t *testing.T) {
 	if err := rootCmd.Execute(); err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Contains(buf.Bytes(), []byte("Lista tareas")) {
+	if !bytes.Contains(buf.Bytes(), []byte("Listar tareas")) {
 		t.Fatalf("unexpected help output: %s", buf.String())
 	}
 }

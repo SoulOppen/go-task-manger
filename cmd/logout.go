@@ -7,7 +7,7 @@ import (
 
 var logoutCmd = &cobra.Command{
 	Use:   "logout",
-	Short: "Cierra la sesion actual",
+	Short: "Cerrar sesion",
 	Run: func(cmd *cobra.Command, args []string) {
 		auth.Logout()
 	},

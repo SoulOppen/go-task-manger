@@ -8,10 +8,10 @@ import (
 
 const (
 	DefaultName    = "gtm"
-	DefaultVersion = "0.0.1"
+	DefaultVersion = "0.1.0"
 
-	DefaultShortDescription = "CLI para gestion de tareas"
-	DefaultLongDescription  = "Herramienta CLI para administrar tareas, autenticacion y flujo diario desde terminal."
+	DefaultShortDescription = "Gestion de tareas y sesion (MySQL)"
+	DefaultLongDescription  = "Tareas con persistencia en MySQL, login y sesion desde la terminal."
 )
 
 func init() {
