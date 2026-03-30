@@ -10,7 +10,7 @@
     
 *   **Estados:** Marca tareas como pendientes o completadas.
     
-*   **Persistencia de Datos:** Almacenamiento local mediante archivos JSON o bases de datos embebidas (como BoltDB).
+*   **Persistencia de Datos:** Tareas en **MySQL**; usuarios y sesion en archivos locales.
     
 *   **Arquitectura Limpia:** Código organizado siguiendo las mejores prácticas de Go.
     
@@ -29,7 +29,7 @@
     `git clone https://github.com/tu-usuario/go-task-manager.git`
 2.  Entra al proyecto:
     `cd go-task-manager`
-3.  (Opcional) Configura credenciales en `.env` a partir de `.envExample`.
+3.  Configura MySQL en `.env` a partir de `.envExample` (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`).
 4.  Usa el instalador segun tu sistema operativo:
     - Linux/macOS: `bash scripts/install.sh`
     - Windows (PowerShell): `powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1`
@@ -50,9 +50,30 @@ El proyecto sigue una estructura modular para facilitar su mantenimiento:
 💻 Uso
 ------
 
-Una vez compilado, puedes usar los siguientes comandos:
+Una vez compilado (o con `go run .`), el binario usa el nombre definido en `DefaultName` dentro de [internal/config/config.go](internal/config/config.go).
 
-**ComandoDescripciónEjemplo**addAñade una nueva tarea./gtm add "Estudiar Go"listMuestra todas las tareas./gtm listdoMarca una tarea como completada./gtm do 1rmElimina una tarea de la lista./gtm rm 2
+### Autenticacion
+
+- `login` / `login --signup` / `logout` / `switch`
+
+### Tareas (MySQL)
+
+La primera ejecucion de un subcomando `task` crea la tabla `tasks` si no existe.
+
+| Comando | Descripcion |
+|--------|-------------|
+| `task add --name "..." --description "..." --relevance N [--due YYYY-MM-DD]` | Crea tarea (id UUID); imprime el id. |
+| `task list` | Lista ordenada: relevancia mayor primero; con fecha de entrega antes que sin fecha; entrega mas cercana primero. |
+| `task get <id>` | Detalle de una tarea. |
+| `task update <id> [--name ...] [--description ...] [--relevance N] [--due YYYY-MM-DD] [--clear-due]` | Actualiza campos indicados. |
+| `task delete <id>` | Elimina la tarea. |
+
+Ejemplo:
+
+```bash
+./bin/task-manager-go task add --name "Reunion" --description "Cliente X" --relevance 8 --due 2026-04-15
+./bin/task-manager-go task list
+```
 
 El nombre del binario coincide con `DefaultName` en `internal/config/config.go` (espacios se reemplazan por `-`).
 
@@ -66,7 +87,7 @@ El nombre del binario coincide con `DefaultName` en `internal/config/config.go` 
     
 *   **Librería CLI:** [Cobra](https://github.com/spf13/cobra) (opcional, para subcomandos complejos)
     
-*   **Persistencia:** JSON / SQLite (dependiendo de tu implementación)
+*   **Persistencia:** MySQL (tareas), JSON local (usuarios / quick connect)
     
 
 🤝 Contribuciones
