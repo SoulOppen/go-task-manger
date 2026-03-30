@@ -14,18 +14,17 @@ echo "Go detectado: ${GO_VERSION}"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${PROJECT_ROOT}"
 
-if [[ ! -f ".env" ]]; then
-  echo "Error: no existe .env. Crea .env con la variable NAME."
+CONFIG_FILE="${PROJECT_ROOT}/internal/config/config.go"
+if [[ ! -f "${CONFIG_FILE}" ]]; then
+  echo "Error: no se encontro ${CONFIG_FILE}"
   exit 1
 fi
 
-RAW_NAME="$(awk -F'=' '/^NAME=/{print $2; exit}' .env | tr -d '\r' | sed 's/^ *//;s/ *$//;s/^"//;s/"$//')"
-if [[ -z "${RAW_NAME}" ]]; then
-  echo "Error: NAME no esta definido en .env."
+APP_NAME="$(grep -E 'DefaultName[[:space:]]*=' "${CONFIG_FILE}" | head -1 | sed -E 's/.*DefaultName[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/' | tr ' ' '-')"
+if [[ -z "${APP_NAME}" ]]; then
+  echo "Error: no se pudo leer DefaultName de internal/config/config.go"
   exit 1
 fi
-
-APP_NAME="${RAW_NAME// /-}"
 
 echo "==> Descargando dependencias..."
 go mod tidy

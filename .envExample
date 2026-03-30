@@ -1,4 +1,3 @@
-NAME=nombre de tu app
 DB_DRIVER=mysql
 DB_HOST=localhost
 DB_PORT=3306

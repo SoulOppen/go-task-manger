@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/SoulOppen/task-manager-go/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +16,7 @@ var versionCmd = &cobra.Command{
 	Short: "Version",
 	Long:  `The actual version of your app.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("0.0.1")
+		fmt.Println(config.AppVersion())
 	},
 }
 

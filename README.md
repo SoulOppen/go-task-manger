@@ -29,7 +29,7 @@
     `git clone https://github.com/tu-usuario/go-task-manager.git`
 2.  Entra al proyecto:
     `cd go-task-manager`
-3.  Define `NAME` en `.env` (puedes copiar `.envExample`).
+3.  (Opcional) Configura credenciales en `.env` a partir de `.envExample`.
 4.  Usa el instalador segun tu sistema operativo:
     - Linux/macOS: `bash scripts/install.sh`
     - Windows (PowerShell): `powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1`
@@ -54,10 +54,10 @@ Una vez compilado, puedes usar los siguientes comandos:
 
 **ComandoDescripciónEjemplo**addAñade una nueva tarea./gtm add "Estudiar Go"listMuestra todas las tareas./gtm listdoMarca una tarea como completada./gtm do 1rmElimina una tarea de la lista./gtm rm 2
 
-Si usaste los scripts de instalacion, el binario queda con el nombre de `NAME` en tu `.env` (espacios reemplazados por `-`).
+El nombre del binario coincide con `DefaultName` en `internal/config/config.go` (espacios se reemplazan por `-`).
 
-- Linux/macOS: `./bin/<NAME-normalizado>`
-- Windows: `.\bin\<NAME-normalizado>.exe`
+- Linux/macOS: `./bin/<DefaultName-normalizado>`
+- Windows: `.\bin\<DefaultName-normalizado>.exe`
 
 🔧 Stack Tecnológico
 --------------------

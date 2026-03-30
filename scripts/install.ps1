@@ -16,25 +16,24 @@ Write-Host "Go detectado: $goVersion"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 
-$envFile = Join-Path $projectRoot ".env"
-if (-not (Test-Path $envFile)) {
-  Write-Error "No existe .env. Crea .env con la variable NAME."
+$configFile = Join-Path $projectRoot "internal\config\config.go"
+if (-not (Test-Path $configFile)) {
+  Write-Error "No se encontro $configFile"
   exit 1
 }
 
-$nameLine = Select-String -Path $envFile -Pattern '^NAME=' | Select-Object -First 1
-if (-not $nameLine) {
-  Write-Error "NAME no esta definido en .env."
+$line = Select-String -Path $configFile -Pattern '^\s*DefaultName\s*=' | Select-Object -First 1
+if (-not $line) {
+  Write-Error "No se pudo leer DefaultName de internal/config/config.go"
   exit 1
 }
 
-$rawName = ($nameLine.Line -replace '^NAME=', '').Trim().Trim('"')
-if ([string]::IsNullOrWhiteSpace($rawName)) {
-  Write-Error "NAME no puede estar vacio en .env."
+if ($line.Line -notmatch 'DefaultName\s*=\s*"([^"]+)"') {
+  Write-Error "Formato inesperado de DefaultName en config.go"
   exit 1
 }
 
-$appName = $rawName -replace ' ', '-'
+$appName = $Matches[1] -replace ' ', '-'
 
 Write-Host "==> Descargando dependencias..."
 go mod tidy

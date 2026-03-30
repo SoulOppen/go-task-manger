@@ -10,7 +10,7 @@ Estructura actual relevante:
 - `cmd/`: comandos Cobra (`root`, `login`, `logout`, `version`).
 - `internal/auth/`: flujo de login/signup y persistencia basica de usuarios.
 - `internal/task/`: modelo `Task` y salida de tareas.
-- `internal/name/`: nombre de la app desde `.env`.
+- `internal/name/`: delegado a `internal/config` para el nombre del CLI.
 
 ## Reglas de trabajo para agentes
 
