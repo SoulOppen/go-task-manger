@@ -15,6 +15,48 @@ func TestValidate_NewTask_OK(t *testing.T) {
 	}
 }
 
+func TestParseDueDate(t *testing.T) {
+	t.Run("vacio", func(t *testing.T) {
+		d, err := ParseDueDate("  ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if d != nil {
+			t.Fatal("expected nil")
+		}
+	})
+	t.Run("ok", func(t *testing.T) {
+		d, err := ParseDueDate("2026-06-15")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if d == nil || d.Year() != 2026 || d.Month() != 6 || d.Day() != 15 {
+			t.Fatalf("got %v", d)
+		}
+	})
+	t.Run("invalido", func(t *testing.T) {
+		_, err := ParseDueDate("15-06-2026")
+		if err == nil {
+			t.Fatal("expected error")
+		}
+	})
+}
+
+func TestValidate_nil(t *testing.T) {
+	var tt *Task
+	if err := tt.Validate(); err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestValidate_uuidInvalido(t *testing.T) {
+	tt := NewTask("a", "b", 5, nil)
+	tt.ID = "no-es-uuid"
+	if err := tt.Validate(); err == nil {
+		t.Fatal("expected error")
+	}
+}
+
 func TestValidate_errors(t *testing.T) {
 	cases := []struct {
 		name string
@@ -47,6 +89,15 @@ func TestValidate_errors(t *testing.T) {
 				t.Fatal("expected error")
 			}
 		})
+	}
+}
+
+func TestSortTasksForList_vacio(t *testing.T) {
+	if got := SortTasksForList(nil); len(got) != 0 {
+		t.Fatalf("len=%d", len(got))
+	}
+	if got := SortTasksForList([]Task{}); len(got) != 0 {
+		t.Fatalf("len=%d", len(got))
 	}
 }
 

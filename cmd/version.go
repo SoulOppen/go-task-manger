@@ -16,7 +16,7 @@ var versionCmd = &cobra.Command{
 	Short: "Mostrar version",
 	Long:  "Imprime el numero de version (internal/config).",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(config.AppVersion())
+		fmt.Fprintln(cmd.OutOrStdout(), config.AppVersion())
 	},
 }
 

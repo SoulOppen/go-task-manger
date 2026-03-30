@@ -6,6 +6,7 @@ import (
 )
 
 func TestTaskListHelpDoesNotRequireMySQL(t *testing.T) {
+	resetRootCmdFlags(t)
 	t.Setenv("DB_HOST", "")
 	t.Setenv("DB_PORT", "")
 	t.Setenv("DB_USER", "")

@@ -33,3 +33,30 @@ func TestMySQLDSN_OK(t *testing.T) {
 		t.Fatalf("dsn: %s", dsn)
 	}
 }
+
+func TestMySQLDSN_OK_SinPassword(t *testing.T) {
+	t.Setenv("DB_HOST", "127.0.0.1")
+	t.Setenv("DB_PORT", "3306")
+	t.Setenv("DB_USER", "root")
+	t.Setenv("DB_PASSWORD", "")
+	t.Setenv("DB_NAME", "testdb")
+	dsn, err := MySQLDSN()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dsn == "" {
+		t.Fatal("empty dsn")
+	}
+}
+
+func TestMySQLDSN_FaltaSoloDB_NAME(t *testing.T) {
+	t.Setenv("DB_HOST", "localhost")
+	t.Setenv("DB_PORT", "3306")
+	t.Setenv("DB_USER", "u")
+	t.Setenv("DB_PASSWORD", "x")
+	t.Setenv("DB_NAME", "")
+	_, err := MySQLDSN()
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}

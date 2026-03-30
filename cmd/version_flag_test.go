@@ -9,6 +9,7 @@ import (
 )
 
 func TestRootVersionShortFlag(t *testing.T) {
+	resetRootCmdFlags(t)
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
 	rootCmd.SetErr(buf)
@@ -23,6 +24,7 @@ func TestRootVersionShortFlag(t *testing.T) {
 }
 
 func TestRootVersionLongFlag(t *testing.T) {
+	resetRootCmdFlags(t)
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
 	rootCmd.SetErr(buf)
