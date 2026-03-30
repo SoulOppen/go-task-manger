@@ -1,7 +1,11 @@
 📝 Go Task Manager (GTM)
 ========================
 
+![Banner GTM — Go Task Manager](docs/images/gtm-banner.png)
+
 **Go Task Manager** es una herramienta de línea de comandos (CLI) ligera y rápida diseñada para ayudarte a organizar tu flujo de trabajo diario sin salir de la terminal.
+
+Recursos graficos del README en [docs/images/](docs/images/).
 
 🚀 Características principales
 ------------------------------
@@ -44,6 +48,8 @@ Alternativa sin script: anade manualmente la carpeta `bin` del repo a tu PATH, o
 
 📂 Estructura del Proyecto
 --------------------------
+
+![Vista de capas: CLI Cobra, paquetes internal y MySQL](docs/images/gtm-architecture.png)
 
 El proyecto sigue una estructura modular para facilitar su mantenimiento:
 
