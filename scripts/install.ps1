@@ -15,17 +15,13 @@ if (-not $goCmd) {
 $goVersion = go version
 Write-Host "Go detectado: $goVersion"
 
-Write-Host "==> Verificando cliente MySQL/MariaDB..."
+Write-Host "==> Verificando cliente MySQL..."
 $mysql = Get-Command mysql -ErrorAction SilentlyContinue
-$mariadb = Get-Command mariadb -ErrorAction SilentlyContinue
-if ($mysql) {
-  mysql --version
-} elseif ($mariadb) {
-  mariadb --version
-} else {
-  Write-Error "No se encontro mysql ni mariadb en PATH. Instala el cliente MySQL o MariaDB."
+if (-not $mysql) {
+  Write-Error "No se encontro mysql en PATH. Instala el cliente MySQL."
   exit 1
 }
+mysql --version
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
@@ -42,18 +38,11 @@ if (-not (Test-Path $binDir)) {
 $binaryPath = Join-Path $binDir "$appName.exe"
 go build -o $binaryPath main.go
 
-Write-Host "==> Verificando binario (version)..."
-$verOut = & $binaryPath version 2>&1
-if ($LASTEXITCODE -ne 0) {
-  Write-Error "El comando version fallo (codigo $LASTEXITCODE)."
-  exit 1
-}
-if ([string]::IsNullOrWhiteSpace([string]$verOut)) {
-  Write-Error "El comando version no produjo salida."
-  exit 1
-}
-Write-Host "Salida: $verOut"
-
 Write-Host "==> Instalacion finalizada."
 Write-Host "Binario generado en: $binaryPath"
-Write-Host "Ejemplo de uso: .\bin\$appName.exe version"
+Write-Host ""
+Write-Host "==> $appName version"
+& $binaryPath version
+if ($LASTEXITCODE -ne 0) {
+  exit $LASTEXITCODE
+}

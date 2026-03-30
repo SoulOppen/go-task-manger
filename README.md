@@ -21,7 +21,7 @@
 ### Requisitos previos
 
 *   **Go** (versión 1.21 o superior recomendada)
-*   **Cliente MySQL o MariaDB** en PATH (los scripts `install.sh` / `install.ps1` comprueban `mysql` o `mariadb --version`; no validan que el servidor este en marcha)
+*   **Cliente MySQL** en PATH (`mysql --version`; los scripts `install.sh` / `install.ps1` no validan que el servidor este en marcha)
     
 
 ### Pasos para instalar
