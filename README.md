@@ -34,7 +34,13 @@
 4.  Usa el instalador segun tu sistema operativo:
     - Linux/macOS: `bash scripts/install.sh`
     - Windows (PowerShell): `powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1`
-    
+
+El instalador deja una copia en **`~/.local/bin/gtm`** (`gtm.exe` en Windows: `%USERPROFILE%\.local\bin\`). Asi puedes ejecutar **`gtm -v`**, **`gtm task list`**, etc. **desde cualquier carpeta**, no solo dentro del repo.
+
+- **Linux/macOS:** si `~/.local/bin` no esta en tu `PATH`, el script indica la linea `export PATH=...` para pegar en `~/.bashrc`, `~/.zshrc` o similar; abre una terminal nueva.
+- **Windows:** el script **anade** `%USERPROFILE%\.local\bin` al PATH del usuario si faltaba; si una terminal ya abierta no encuentra `gtm`, cerrala y abre otra.
+
+Alternativa sin script: anade manualmente la carpeta `bin` del repo a tu PATH, o usa la ruta completa al binario.
 
 📂 Estructura del Proyecto
 --------------------------
@@ -79,7 +85,9 @@ Ejemplo:
 ./bin/gtm task list
 ```
 
-Tras instalar con el script:
+Con el binario en PATH (tras el instalador, ver arriba): `gtm -v` y `gtm task list` desde cualquier directorio.
+
+Solo en el repo, sin PATH global:
 
 - Linux/macOS: `./bin/gtm`
 - Windows: `.\bin\gtm.exe`

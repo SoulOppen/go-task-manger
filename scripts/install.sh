@@ -31,9 +31,21 @@ mkdir -p bin
 go build -o "bin/${APP_NAME}" main.go
 
 BIN_PATH="${PROJECT_ROOT}/bin/${APP_NAME}"
+INSTALL_BIN="${HOME}/.local/bin"
+mkdir -p "${INSTALL_BIN}"
+cp "${BIN_PATH}" "${INSTALL_BIN}/${APP_NAME}"
+chmod +x "${INSTALL_BIN}/${APP_NAME}"
 
 echo "==> Instalacion finalizada."
-echo "Binario generado en: ${BIN_PATH}"
+echo "Binario en el repo: ${BIN_PATH}"
+echo "Copia para uso global: ${INSTALL_BIN}/${APP_NAME}"
+if [[ ":${PATH}:" != *":${INSTALL_BIN}:"* ]]; then
+  echo ""
+  echo ">>> Anade esta linea a ~/.bashrc, ~/.zshrc o ~/.profile y abre una terminal nueva:"
+  echo "    export PATH=\"${INSTALL_BIN}:\${PATH}\""
+  echo ">>> O ejecuta con ruta completa hasta entonces:"
+  echo "    ${INSTALL_BIN}/${APP_NAME} -v"
+fi
 echo ""
-echo "==> ${APP_NAME} version"
-"$BIN_PATH" version
+echo "==> ${APP_NAME} -v"
+"${INSTALL_BIN}/${APP_NAME}" -v

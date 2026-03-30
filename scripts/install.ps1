@@ -38,11 +38,26 @@ if (-not (Test-Path $binDir)) {
 $binaryPath = Join-Path $binDir "$appName.exe"
 go build -o $binaryPath main.go
 
+$installBin = Join-Path $env:USERPROFILE ".local\bin"
+New-Item -ItemType Directory -Force -Path $installBin | Out-Null
+$installedPath = Join-Path $installBin "$appName.exe"
+Copy-Item -Path $binaryPath -Destination $installedPath -Force
+
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -notlike "*${installBin}*") {
+  $trim = if ([string]::IsNullOrWhiteSpace($userPath)) { "" } else { $userPath.TrimEnd(';') }
+  $newPath = if ([string]::IsNullOrWhiteSpace($trim)) { $installBin } else { "${trim};${installBin}" }
+  [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+  $env:Path = "${env:Path};${installBin}"
+  Write-Host "==> Se agrego al PATH de usuario: $installBin (reinicia la terminal si gtm no se reconoce)."
+}
+
 Write-Host "==> Instalacion finalizada."
-Write-Host "Binario generado en: $binaryPath"
+Write-Host "Binario en el repo: $binaryPath"
+Write-Host "Copia para uso global: $installedPath"
 Write-Host ""
-Write-Host "==> $appName version"
-& $binaryPath version
+Write-Host "==> $appName -v"
+& $installedPath -v
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
