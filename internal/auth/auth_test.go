@@ -20,11 +20,16 @@ func setupConfigDir(t *testing.T) string {
 	return filepath.Join(tempDir, "task-manager-go", "users.json")
 }
 
+func sessionPathFromTemp(tempDir string) string {
+	return filepath.Join(tempDir, "task-manager-go", "session.json")
+}
+
 func TestRunSignUpAndLoginSuccess(t *testing.T) {
 	nowFunc = func() time.Time { return time.Date(2026, 3, 30, 10, 0, 0, 0, time.UTC) }
 	t.Cleanup(func() { nowFunc = time.Now })
 
 	usersPath := setupConfigDir(t)
+	sessionPath := sessionPathFromTemp(filepath.Dir(filepath.Dir(usersPath)))
 
 	signUpInput := bytes.NewBufferString("ariel\nsecret123\n")
 	signUpOut := &bytes.Buffer{}
@@ -40,6 +45,9 @@ func TestRunSignUpAndLoginSuccess(t *testing.T) {
 	loginOut := &bytes.Buffer{}
 	if err := runLogin(loginInput, loginOut); err != nil {
 		t.Fatalf("runLogin returned error: %v", err)
+	}
+	if _, err := os.Stat(sessionPath); err != nil {
+		t.Fatalf("expected session file to exist: %v", err)
 	}
 
 	users, err := loadUsers()
@@ -144,5 +152,22 @@ func TestRunLoginResetsQuickConnectOncePerDay(t *testing.T) {
 	user, _, _ = findUser(users, "ariel")
 	if user.QuickConnectValue == firstValue {
 		t.Fatal("quick connect must reset on first execution of a new day")
+	}
+}
+
+func TestClearSession(t *testing.T) {
+	tempDir := t.TempDir()
+	t.Setenv("APPDATA", tempDir)
+	t.Setenv("XDG_CONFIG_HOME", tempDir)
+
+	if err := saveSession("ariel"); err != nil {
+		t.Fatalf("saveSession returned error: %v", err)
+	}
+	if err := clearSession(); err != nil {
+		t.Fatalf("clearSession returned error: %v", err)
+	}
+	path := sessionPathFromTemp(tempDir)
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("expected session file to be deleted, got err=%v", err)
 	}
 }

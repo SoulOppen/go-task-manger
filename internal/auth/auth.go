@@ -35,6 +35,13 @@ type QuickConnectFile struct {
 	Username  string `json:"username"`
 }
 
+type Session struct {
+	Username  string `json:"username"`
+	LoginAt   string `json:"login_at"`
+	OS        string `json:"os"`
+	PCUID     string `json:"pc_uid"`
+}
+
 var nowFunc = time.Now
 
 func usersFile() (string, error) {
@@ -44,6 +51,15 @@ func usersFile() (string, error) {
 	}
 
 	return filepath.Join(confDir, "task-manager-go", "users.json"), nil
+}
+
+func sessionFile() (string, error) {
+	confDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(confDir, "task-manager-go", "session.json"), nil
 }
 
 func loadUsers() ([]User, error) {
@@ -203,6 +219,10 @@ func runLogin(in io.Reader, out io.Writer) error {
 		return err
 	}
 
+	if err := saveSession(updatedUser.Username); err != nil {
+		return err
+	}
+
 	fmt.Fprintln(out, "Login exitoso")
 	return nil
 }
@@ -330,6 +350,43 @@ func validateQuickConnectFile(path string, user User, now time.Time) (bool, erro
 	return true, nil
 }
 
+func saveSession(username string) error {
+	path, err := sessionFile()
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+
+	session := Session{
+		Username: username,
+		LoginAt:  nowFunc().UTC().Format(time.RFC3339),
+		OS:       runtime.GOOS,
+		PCUID:    machineUID(),
+	}
+
+	data, err := json.MarshalIndent(session, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, data, 0644)
+}
+
+func clearSession() error {
+	path, err := sessionFile()
+	if err != nil {
+		return err
+	}
+
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
+}
+
 func machineUID() string {
 	hostname, _ := os.Hostname()
 	home, _ := os.UserHomeDir()
@@ -351,6 +408,22 @@ func SignUp() {
 }
 
 func Login() {
+	if err := runLogin(os.Stdin, os.Stdout); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func Logout() {
+	if err := clearSession(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	fmt.Fprintln(os.Stdout, "Logout exitoso")
+}
+
+func SwitchUser() {
+	// Switch reutiliza el flujo de login para cambiar el usuario activo.
 	if err := runLogin(os.Stdin, os.Stdout); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
