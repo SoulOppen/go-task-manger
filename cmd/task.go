@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"database/sql"
 	"fmt"
+	"io"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -36,6 +39,14 @@ var taskAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Crea una tarea",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if shouldPromptAdd(cmd) {
+			var err error
+			addName, addDescription, addRelevance, addDue, err = promptAddFields(cmd.InOrStdin(), cmd.OutOrStdout())
+			if err != nil {
+				return err
+			}
+		}
+
 		due, err := task.ParseDueDate(addDue)
 		if err != nil {
 			return err
@@ -84,10 +95,14 @@ var taskListCmd = &cobra.Command{
 var taskGetCmd = &cobra.Command{
 	Use:   "get [id]",
 	Short: "Muestra una tarea por id",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := resolveTaskID(args, cmd.InOrStdin(), cmd.OutOrStdout())
+		if err != nil {
+			return err
+		}
 		return withTaskRepo(cmd.Context(), func(repo *task.Repository) error {
-			t, err := repo.GetByID(cmd.Context(), args[0])
+			t, err := repo.GetByID(cmd.Context(), id)
 			if err != nil {
 				return err
 			}
@@ -103,23 +118,35 @@ var taskGetCmd = &cobra.Command{
 }
 
 var (
-	updName         string
-	updDescription  string
-	updRelevance      int
-	updDue            string
-	updClearDue       bool
+	updName        string
+	updDescription string
+	updRelevance   int
+	updDue         string
+	updClearDue    bool
 )
 
 var taskUpdateCmd = &cobra.Command{
 	Use:   "update [id]",
 	Short: "Actualiza una tarea",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := resolveTaskID(args, cmd.InOrStdin(), cmd.OutOrStdout())
+		if err != nil {
+			return err
+		}
+
 		return withTaskRepo(cmd.Context(), func(repo *task.Repository) error {
-			existing, err := repo.GetByID(cmd.Context(), args[0])
+			existing, err := repo.GetByID(cmd.Context(), id)
 			if err != nil {
 				return err
 			}
+
+			if shouldPromptUpdate(cmd) {
+				if err := promptUpdateFields(existing, cmd.InOrStdin(), cmd.OutOrStdout()); err != nil {
+					return err
+				}
+			}
+
 			if cmd.Flags().Changed("name") {
 				existing.Name = strings.TrimSpace(updName)
 			}
@@ -149,10 +176,14 @@ var taskUpdateCmd = &cobra.Command{
 var taskDeleteCmd = &cobra.Command{
 	Use:   "delete [id]",
 	Short: "Elimina una tarea",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := resolveTaskID(args, cmd.InOrStdin(), cmd.OutOrStdout())
+		if err != nil {
+			return err
+		}
 		return withTaskRepo(cmd.Context(), func(repo *task.Repository) error {
-			return repo.Delete(cmd.Context(), args[0])
+			return repo.Delete(cmd.Context(), id)
 		})
 	},
 }
@@ -164,8 +195,6 @@ func init() {
 	taskAddCmd.Flags().StringVar(&addDescription, "description", "", "descripcion")
 	taskAddCmd.Flags().IntVar(&addRelevance, "relevance", 5, "relevancia 1-10")
 	taskAddCmd.Flags().StringVar(&addDue, "due", "", "fecha de entrega YYYY-MM-DD (opcional)")
-	_ = taskAddCmd.MarkFlagRequired("name")
-	_ = taskAddCmd.MarkFlagRequired("description")
 
 	taskCmd.AddCommand(taskListCmd)
 	taskCmd.AddCommand(taskGetCmd)
@@ -182,4 +211,126 @@ func init() {
 	for _, c := range []*cobra.Command{taskAddCmd, taskListCmd, taskGetCmd, taskUpdateCmd, taskDeleteCmd} {
 		c.SilenceUsage = true
 	}
+}
+
+func shouldPromptAdd(cmd *cobra.Command) bool {
+	return !cmd.Flags().Changed("name") &&
+		!cmd.Flags().Changed("description") &&
+		!cmd.Flags().Changed("relevance") &&
+		!cmd.Flags().Changed("due")
+}
+
+func shouldPromptUpdate(cmd *cobra.Command) bool {
+	return !cmd.Flags().Changed("name") &&
+		!cmd.Flags().Changed("description") &&
+		!cmd.Flags().Changed("relevance") &&
+		!cmd.Flags().Changed("due") &&
+		!cmd.Flags().Changed("clear-due")
+}
+
+func resolveTaskID(args []string, in io.Reader, out io.Writer) (string, error) {
+	if len(args) > 0 && strings.TrimSpace(args[0]) != "" {
+		return strings.TrimSpace(args[0]), nil
+	}
+	id, err := promptLine(bufio.NewReader(in), out, "ID de la tarea")
+	if err != nil {
+		return "", err
+	}
+	if id == "" {
+		return "", fmt.Errorf("el id es obligatorio")
+	}
+	return id, nil
+}
+
+func promptAddFields(in io.Reader, out io.Writer) (name, description string, relevance int, due string, err error) {
+	reader := bufio.NewReader(in)
+	name, err = promptLine(reader, out, "Nombre")
+	if err != nil {
+		return "", "", 0, "", err
+	}
+	description, err = promptLine(reader, out, "Descripcion")
+	if err != nil {
+		return "", "", 0, "", err
+	}
+	relevance, err = promptInt(reader, out, "Relevancia (1-10, default 5)", 5)
+	if err != nil {
+		return "", "", 0, "", err
+	}
+	due, err = promptLine(reader, out, "Fecha de entrega YYYY-MM-DD (opcional)")
+	if err != nil {
+		return "", "", 0, "", err
+	}
+	return name, description, relevance, due, nil
+}
+
+func promptUpdateFields(current *task.Task, in io.Reader, out io.Writer) error {
+	reader := bufio.NewReader(in)
+
+	name, err := promptLine(reader, out, fmt.Sprintf("Nombre [%s]", current.Name))
+	if err != nil {
+		return err
+	}
+	if name != "" {
+		current.Name = name
+	}
+
+	description, err := promptLine(reader, out, fmt.Sprintf("Descripcion [%s]", current.Description))
+	if err != nil {
+		return err
+	}
+	if description != "" {
+		current.Description = description
+	}
+
+	relevance, err := promptInt(reader, out, fmt.Sprintf("Relevancia (1-10) [%d]", current.Relevance), current.Relevance)
+	if err != nil {
+		return err
+	}
+	current.Relevance = relevance
+
+	currentDue := "-"
+	if current.DueDate != nil {
+		currentDue = current.DueDate.Format(task.DateLayout)
+	}
+	dueInput, err := promptLine(reader, out, fmt.Sprintf("Fecha entrega YYYY-MM-DD [%s] (use '-' para limpiar)", currentDue))
+	if err != nil {
+		return err
+	}
+	switch strings.TrimSpace(dueInput) {
+	case "":
+		// keep
+	case "-":
+		current.DueDate = nil
+	default:
+		due, err := task.ParseDueDate(dueInput)
+		if err != nil {
+			return err
+		}
+		current.DueDate = due
+	}
+	return nil
+}
+
+func promptLine(reader *bufio.Reader, out io.Writer, label string) (string, error) {
+	fmt.Fprintf(out, "%s: ", label)
+	line, err := reader.ReadString('\n')
+	if err != nil && err != io.EOF {
+		return "", err
+	}
+	return strings.TrimSpace(line), nil
+}
+
+func promptInt(reader *bufio.Reader, out io.Writer, label string, fallback int) (int, error) {
+	value, err := promptLine(reader, out, label)
+	if err != nil {
+		return 0, err
+	}
+	if value == "" {
+		return fallback, nil
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("valor numerico invalido: %w", err)
+	}
+	return n, nil
 }

@@ -2,6 +2,8 @@ Param()
 
 $ErrorActionPreference = "Stop"
 
+$appName = "gtm"
+
 Write-Host "==> Verificando entorno..."
 
 $goCmd = Get-Command go -ErrorAction SilentlyContinue
@@ -13,27 +15,20 @@ if (-not $goCmd) {
 $goVersion = go version
 Write-Host "Go detectado: $goVersion"
 
+Write-Host "==> Verificando cliente MySQL/MariaDB..."
+$mysql = Get-Command mysql -ErrorAction SilentlyContinue
+$mariadb = Get-Command mariadb -ErrorAction SilentlyContinue
+if ($mysql) {
+  mysql --version
+} elseif ($mariadb) {
+  mariadb --version
+} else {
+  Write-Error "No se encontro mysql ni mariadb en PATH. Instala el cliente MySQL o MariaDB."
+  exit 1
+}
+
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
-
-$configFile = Join-Path $projectRoot "internal\config\config.go"
-if (-not (Test-Path $configFile)) {
-  Write-Error "No se encontro $configFile"
-  exit 1
-}
-
-$line = Select-String -Path $configFile -Pattern '^\s*DefaultName\s*=' | Select-Object -First 1
-if (-not $line) {
-  Write-Error "No se pudo leer DefaultName de internal/config/config.go"
-  exit 1
-}
-
-if ($line.Line -notmatch 'DefaultName\s*=\s*"([^"]+)"') {
-  Write-Error "Formato inesperado de DefaultName en config.go"
-  exit 1
-}
-
-$appName = $Matches[1] -replace ' ', '-'
 
 Write-Host "==> Descargando dependencias..."
 go mod tidy
@@ -44,9 +39,21 @@ if (-not (Test-Path $binDir)) {
   New-Item -Path $binDir -ItemType Directory | Out-Null
 }
 
-$binaryName = "$appName.exe"
-go build -o (Join-Path $binDir $binaryName) main.go
+$binaryPath = Join-Path $binDir "$appName.exe"
+go build -o $binaryPath main.go
+
+Write-Host "==> Verificando binario (version)..."
+$verOut = & $binaryPath version 2>&1
+if ($LASTEXITCODE -ne 0) {
+  Write-Error "El comando version fallo (codigo $LASTEXITCODE)."
+  exit 1
+}
+if ([string]::IsNullOrWhiteSpace([string]$verOut)) {
+  Write-Error "El comando version no produjo salida."
+  exit 1
+}
+Write-Host "Salida: $verOut"
 
 Write-Host "==> Instalacion finalizada."
-Write-Host "Binario generado en: $(Join-Path $binDir $binaryName)"
-Write-Host "Ejemplo de uso: .\bin\$binaryName version"
+Write-Host "Binario generado en: $binaryPath"
+Write-Host "Ejemplo de uso: .\bin\$appName.exe version"

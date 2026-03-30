@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	DefaultName    = "task-manager-go"
+	DefaultName    = "gtm"
 	DefaultVersion = "0.0.1"
 
 	DefaultShortDescription = "CLI para gestion de tareas"

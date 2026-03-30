@@ -21,6 +21,7 @@
 ### Requisitos previos
 
 *   **Go** (versión 1.21 o superior recomendada)
+*   **Cliente MySQL o MariaDB** en PATH (los scripts `install.sh` / `install.ps1` comprueban `mysql` o `mariadb --version`; no validan que el servidor este en marcha)
     
 
 ### Pasos para instalar
@@ -50,7 +51,7 @@ El proyecto sigue una estructura modular para facilitar su mantenimiento:
 💻 Uso
 ------
 
-Una vez compilado (o con `go run .`), el binario usa el nombre definido en `DefaultName` dentro de [internal/config/config.go](internal/config/config.go).
+Los instaladores generan siempre el binario **`gtm`** (`gtm.exe` en Windows), alineado con `DefaultName` en [internal/config/config.go](internal/config/config.go). Tambien puedes usar `go run .`.
 
 ### Autenticacion (MySQL)
 
@@ -64,23 +65,24 @@ La primera ejecucion de un subcomando `task` crea la tabla `tasks` si no existe.
 
 | Comando | Descripcion |
 |--------|-------------|
-| `task add --name "..." --description "..." --relevance N [--due YYYY-MM-DD]` | Crea tarea (id UUID); imprime el id. |
+| `task add` (sin flags) | Modo interactivo por terminal. |
+| `task add --name "..." --description "..." [--relevance N] [--due YYYY-MM-DD]` | Crea tarea (id UUID); imprime el id. |
 | `task list` | Lista ordenada: relevancia mayor primero; con fecha de entrega antes que sin fecha; entrega mas cercana primero. |
-| `task get <id>` | Detalle de una tarea. |
-| `task update <id> [--name ...] [--description ...] [--relevance N] [--due YYYY-MM-DD] [--clear-due]` | Actualiza campos indicados. |
-| `task delete <id>` | Elimina la tarea. |
+| `task get [id]` | Detalle; sin `id` lo pide por terminal. |
+| `task update [id]` | Sin flags: modo interactivo. Con flags: actualiza solo lo indicado (`--clear-due` quita entrega). |
+| `task delete [id]` | Elimina; sin `id` lo pide por terminal. |
 
 Ejemplo:
 
 ```bash
-./bin/task-manager-go task add --name "Reunion" --description "Cliente X" --relevance 8 --due 2026-04-15
-./bin/task-manager-go task list
+./bin/gtm task add --name "Reunion" --description "Cliente X" --relevance 8 --due 2026-04-15
+./bin/gtm task list
 ```
 
-El nombre del binario coincide con `DefaultName` en `internal/config/config.go` (espacios se reemplazan por `-`).
+Tras instalar con el script:
 
-- Linux/macOS: `./bin/<DefaultName-normalizado>`
-- Windows: `.\bin\<DefaultName-normalizado>.exe`
+- Linux/macOS: `./bin/gtm`
+- Windows: `.\bin\gtm.exe`
 
 🔧 Stack Tecnológico
 --------------------
