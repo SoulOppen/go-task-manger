@@ -1,10 +1,11 @@
 module github.com/SoulOppen/task-manager-go
 
-go 1.24.4
+go 1.25.0
 
 require (
 	github.com/joho/godotenv v1.5.1
 	github.com/spf13/cobra v1.10.2
+	golang.org/x/crypto v0.49.0
 )
 
 require (

@@ -1,1 +1,7 @@
 NAME=nombre de tu app
+DB_DRIVER=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=tu_usuario
+DB_PASSWORD=tu_password
+DB_NAME=tu_base_de_datos
