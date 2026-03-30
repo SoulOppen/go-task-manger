@@ -9,21 +9,6 @@ import (
 
 var ErrNotFound = errors.New("tarea no encontrada")
 
-const migrateSQL = `CREATE TABLE IF NOT EXISTS tasks (
-  id CHAR(36) NOT NULL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT NOT NULL,
-  relevance TINYINT NOT NULL,
-  created_at DATETIME(6) NOT NULL,
-  due_date DATE NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
-
-// Migrate crea la tabla tasks si no existe.
-func Migrate(ctx context.Context, db *sql.DB) error {
-	_, err := db.ExecContext(ctx, migrateSQL)
-	return err
-}
-
 // Repository accede a tareas en MySQL.
 type Repository struct {
 	db *sql.DB

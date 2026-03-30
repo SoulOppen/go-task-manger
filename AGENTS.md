@@ -7,8 +7,9 @@ Este repositorio implementa `Go Task Manager (GTM)`, un CLI en Go orientado a ge
 Referencia funcional principal: `README.md`.
 
 Estructura actual relevante:
-- `cmd/`: comandos Cobra (`root`, `login`, `logout`, `version`).
-- `internal/auth/`: flujo de login/signup y persistencia basica de usuarios.
+- `cmd/`: comandos Cobra (`root`, `login`, `logout`, `switch`, `task`, `version`).
+- `internal/db/`: conexion MySQL y migracion (`tasks` + `users`).
+- `internal/auth/`: login/signup/switch contra MySQL; quick-connect auxiliar en disco.
 - `internal/task/`: modelo `Task` y salida de tareas.
 - `internal/name/`: delegado a `internal/config` para el nombre del CLI.
 

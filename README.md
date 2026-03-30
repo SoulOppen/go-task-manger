@@ -10,7 +10,7 @@
     
 *   **Estados:** Marca tareas como pendientes o completadas.
     
-*   **Persistencia de Datos:** Tareas en **MySQL**; usuarios y sesion en archivos locales.
+*   **Persistencia de Datos:** Tareas y **usuarios** (credenciales + quick-connect) en **MySQL**; sesion local (`session.json`) y archivos `quick_connect_*.json` en el directorio de configuracion del usuario.
     
 *   **Arquitectura Limpia:** Código organizado siguiendo las mejores prácticas de Go.
     
@@ -52,7 +52,9 @@ El proyecto sigue una estructura modular para facilitar su mantenimiento:
 
 Una vez compilado (o con `go run .`), el binario usa el nombre definido en `DefaultName` dentro de [internal/config/config.go](internal/config/config.go).
 
-### Autenticacion
+### Autenticacion (MySQL)
+
+Los comandos `login`, `login --signup` y `switch` requieren las mismas variables `DB_*` que las tareas. La primera ejecucion crea la tabla `users` si no existe. `logout` solo borra la sesion local.
 
 - `login` / `login --signup` / `logout` / `switch`
 
@@ -87,7 +89,7 @@ El nombre del binario coincide con `DefaultName` en `internal/config/config.go` 
     
 *   **Librería CLI:** [Cobra](https://github.com/spf13/cobra) (opcional, para subcomandos complejos)
     
-*   **Persistencia:** MySQL (tareas), JSON local (usuarios / quick connect)
+*   **Persistencia:** MySQL (`tasks`, `users`); JSON local (sesion y quick_connect por archivo)
     
 
 🤝 Contribuciones

@@ -8,35 +8,16 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/SoulOppen/task-manager-go/internal/config"
+	"github.com/SoulOppen/task-manager-go/internal/db"
 	"github.com/SoulOppen/task-manager-go/internal/task"
 	"github.com/spf13/cobra"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
-// withTaskRepo abre MySQL, migra y ejecuta fn con un repository cerrando la conexion al salir.
-// Evita PersistentPreRun en el comando task para que `task --help` no requiera base de datos.
+// withTaskRepo abre MySQL, migra (tasks + users) y ejecuta fn.
 func withTaskRepo(ctx context.Context, fn func(*task.Repository) error) error {
-	dsn, err := config.MySQLDSN()
-	if err != nil {
-		return err
-	}
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return fmt.Errorf("abrir mysql: %w", err)
-	}
-	defer func() { _ = db.Close() }()
-
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-	if err := db.PingContext(ctx); err != nil {
-		return fmt.Errorf("ping mysql: %w", err)
-	}
-	if err := task.Migrate(ctx, db); err != nil {
-		return fmt.Errorf("migrar: %w", err)
-	}
-	return fn(task.NewRepository(db))
+	return db.WithDB(ctx, func(d *sql.DB) error {
+		return fn(task.NewRepository(d))
+	})
 }
 
 var (

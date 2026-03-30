@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bufio"
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -27,92 +28,29 @@ type User struct {
 }
 
 type QuickConnectFile struct {
-	Valor     string `json:"valor"`
-	Creacion  string `json:"creacion"`
+	Valor      string `json:"valor"`
+	Creacion   string `json:"creacion"`
 	Expiracion string `json:"expiracion"`
-	OS        string `json:"os"`
-	PCUID     string `json:"pc_uid"`
-	Username  string `json:"username"`
+	OS         string `json:"os"`
+	PCUID      string `json:"pc_uid"`
+	Username   string `json:"username"`
 }
 
 type Session struct {
-	Username  string `json:"username"`
-	LoginAt   string `json:"login_at"`
-	OS        string `json:"os"`
-	PCUID     string `json:"pc_uid"`
+	Username string `json:"username"`
+	LoginAt  string `json:"login_at"`
+	OS       string `json:"os"`
+	PCUID    string `json:"pc_uid"`
 }
 
 var nowFunc = time.Now
-
-func usersFile() (string, error) {
-	confDir, err := os.UserConfigDir()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(confDir, "task-manager-go", "users.json"), nil
-}
 
 func sessionFile() (string, error) {
 	confDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
-
 	return filepath.Join(confDir, "task-manager-go", "session.json"), nil
-}
-
-func loadUsers() ([]User, error) {
-	path, err := usersFile()
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return []User{}, nil
-		}
-		return nil, err
-	}
-
-	if len(data) == 0 {
-		return []User{}, nil
-	}
-
-	var users []User
-	if err := json.Unmarshal(data, &users); err != nil {
-		return nil, err
-	}
-
-	return users, nil
-}
-
-func saveUsers(users []User) error {
-	path, err := usersFile()
-	if err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return err
-	}
-
-	data, err := json.MarshalIndent(users, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(path, data, 0644)
-}
-
-func findUser(users []User, username string) (User, int, bool) {
-	for index, user := range users {
-		if user.Username == username {
-			return user, index, true
-		}
-	}
-	return User{}, -1, false
 }
 
 func scanLine(scanner *bufio.Scanner) (string, error) {
@@ -125,7 +63,8 @@ func scanLine(scanner *bufio.Scanner) (string, error) {
 	return strings.TrimSpace(scanner.Text()), nil
 }
 
-func runSignUp(in io.Reader, out io.Writer) error {
+// RunSignUp registra un usuario en el store (MySQL en produccion).
+func RunSignUp(ctx context.Context, store UserStore, in io.Reader, out io.Writer) error {
 	scanner := bufio.NewScanner(in)
 
 	fmt.Fprintln(out, "Bienvenido al sistema de conexión")
@@ -147,13 +86,10 @@ func runSignUp(in io.Reader, out io.Writer) error {
 		return errors.New("la clave es obligatoria")
 	}
 
-	users, err := loadUsers()
-	if err != nil {
-		return err
-	}
-
-	if _, _, exists := findUser(users, username); exists {
+	if _, err := store.GetByUsername(ctx, username); err == nil {
 		return errors.New("el usuario ya existe")
+	} else if !errors.Is(err, ErrUserNotFound) {
+		return err
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -161,12 +97,14 @@ func runSignUp(in io.Reader, out io.Writer) error {
 		return err
 	}
 
-	users = append(users, User{
+	u := User{
 		Username:     username,
 		PasswordHash: string(hashedPassword),
-	})
-
-	if err := saveUsers(users); err != nil {
+	}
+	if err := store.Create(ctx, u); err != nil {
+		if errors.Is(err, ErrUserExists) {
+			return errors.New("el usuario ya existe")
+		}
 		return err
 	}
 
@@ -174,7 +112,8 @@ func runSignUp(in io.Reader, out io.Writer) error {
 	return nil
 }
 
-func runLogin(in io.Reader, out io.Writer) error {
+// RunLogin autentica y actualiza quick-connect en el store.
+func RunLogin(ctx context.Context, store UserStore, in io.Reader, out io.Writer) error {
 	scanner := bufio.NewScanner(in)
 
 	fmt.Fprintln(out, "¿Cuál es tu nombre de usuario?")
@@ -195,14 +134,12 @@ func runLogin(in io.Reader, out io.Writer) error {
 		return errors.New("la clave es obligatoria")
 	}
 
-	users, err := loadUsers()
+	user, err := store.GetByUsername(ctx, username)
 	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return errors.New("no existe usuario")
+		}
 		return err
-	}
-
-	user, userIndex, exists := findUser(users, username)
-	if !exists {
-		return errors.New("no existe usuario")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
@@ -214,8 +151,7 @@ func runLogin(in io.Reader, out io.Writer) error {
 		return err
 	}
 
-	users[userIndex] = updatedUser
-	if err := saveUsers(users); err != nil {
+	if err := store.Update(ctx, updatedUser); err != nil {
 		return err
 	}
 
@@ -286,11 +222,11 @@ func parseQuickConnectCreatedAt(value string) (time.Time, error) {
 }
 
 func generateHexValue24() (string, error) {
-	bytes := make([]byte, 12)
-	if _, err := rand.Read(bytes); err != nil {
+	b := make([]byte, 12)
+	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(bytes), nil
+	return hex.EncodeToString(b), nil
 }
 
 func quickConnectFile(username string) (string, error) {
@@ -298,7 +234,6 @@ func quickConnectFile(username string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	safeUsername := strings.ReplaceAll(strings.TrimSpace(username), " ", "_")
 	return filepath.Join(confDir, "task-manager-go", "quick_connect_"+safeUsername+".json"), nil
 }
@@ -307,12 +242,10 @@ func writeQuickConnectFile(path string, payload QuickConnectFile) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-
 	data, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
 		return err
 	}
-
 	return os.WriteFile(path, data, 0644)
 }
 
@@ -355,23 +288,19 @@ func saveSession(username string) error {
 	if err != nil {
 		return err
 	}
-
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-
 	session := Session{
 		Username: username,
 		LoginAt:  nowFunc().UTC().Format(time.RFC3339),
 		OS:       runtime.GOOS,
 		PCUID:    machineUID(),
 	}
-
 	data, err := json.MarshalIndent(session, "", "  ")
 	if err != nil {
 		return err
 	}
-
 	return os.WriteFile(path, data, 0644)
 }
 
@@ -380,7 +309,6 @@ func clearSession() error {
 	if err != nil {
 		return err
 	}
-
 	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
@@ -400,32 +328,10 @@ func machineUID() string {
 	return hex.EncodeToString(hash[:16])
 }
 
-func SignUp() {
-	if err := runSignUp(os.Stdin, os.Stdout); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-}
-
-func Login() {
-	if err := runLogin(os.Stdin, os.Stdout); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-}
-
 func Logout() {
 	if err := clearSession(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	fmt.Fprintln(os.Stdout, "Logout exitoso")
-}
-
-func SwitchUser() {
-	// Switch reutiliza el flujo de login para cambiar el usuario activo.
-	if err := runLogin(os.Stdin, os.Stdout); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
 }
