@@ -1,10 +1,14 @@
 package taskllm
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 )
+
+// ErrLLMNotConfigured indica que no hay API key ni otra config minima en el entorno.
+var ErrLLMNotConfigured = errors.New("LLM no esta configurado")
 
 const (
 	envProvider = "GTM_LLM_PROVIDER"
@@ -29,7 +33,7 @@ func ConfigFromEnv() (Config, error) {
 	}
 	key := strings.TrimSpace(os.Getenv(envAPIKey))
 	if key == "" {
-		return Config{}, fmt.Errorf("defina %s en el entorno (.env)", envAPIKey)
+		return Config{}, fmt.Errorf("%w: defina %s en .env o variables de entorno (vea .envExample)", ErrLLMNotConfigured, envAPIKey)
 	}
 	model := strings.TrimSpace(os.Getenv(envModel))
 	if model == "" {
