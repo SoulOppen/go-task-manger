@@ -35,6 +35,9 @@ var taskAddPromptCmd = &cobra.Command{
 		if m := strings.TrimSpace(addPromptModel); m != "" {
 			cfg.Model = m
 		}
+		if err := cfg.Validate(); err != nil {
+			return err
+		}
 
 		tasks, err := taskllm.ExtractTasksFromPrompt(cmd.Context(), cfg, userText)
 		if err != nil {

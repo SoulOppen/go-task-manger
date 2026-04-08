@@ -5,8 +5,9 @@ DB_USER=tu_usuario
 DB_PASSWORD=tu_password
 DB_NAME=tu_base_de_datos
 
-# Opcional: comando `gtm task add-prompt` (LLM)
-# GTM_LLM_PROVIDER=gemini
+# Comando `gtm task add-prompt` (LLM): sin valores por defecto en el binario.
+# Obligatorios: API key, proveedor y modelo (en .env o via --llm-provider / --llm-model).
 # GTM_LLM_API_KEY=
+# GTM_LLM_PROVIDER=gemini
 # GTM_LLM_MODEL=gemini-2.0-flash
-# Para APIs tipo OpenAI (OpenAI, compatibles): GTM_LLM_PROVIDER=openai y opcional GTM_LLM_BASE_URL=https://api.openai.com/v1
+# Opcional: GTM_LLM_BASE_URL (p. ej. endpoint compatible OpenAI si no usas el host por defecto del driver)
