@@ -20,6 +20,10 @@ type Task struct {
 	Relevance   int
 	CreatedAt   time.Time
 	DueDate     *time.Time
+	// DependsOnID es otra tarea de la que depende esta (opcional).
+	DependsOnID *string
+	// DependsOnName solo se rellena en listados con JOIN; no se persiste solo.
+	DependsOnName string
 }
 
 // NewTask crea una tarea nueva con id UUID y CreatedAt en UTC (no persiste).
@@ -60,6 +64,21 @@ func (t *Task) Validate() error {
 	}
 	if _, err := uuid.Parse(t.ID); err != nil {
 		return fmt.Errorf("id invalido: %w", err)
+	}
+	if t.DependsOnID != nil {
+		dep := strings.TrimSpace(*t.DependsOnID)
+		if dep == "" {
+			t.DependsOnID = nil
+		} else {
+			if _, err := uuid.Parse(dep); err != nil {
+				return fmt.Errorf("depends_on_id invalido: %w", err)
+			}
+			if dep == t.ID {
+				return errors.New("una tarea no puede depender de si misma")
+			}
+			normalized := dep
+			t.DependsOnID = &normalized
+		}
 	}
 	return nil
 }

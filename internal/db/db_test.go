@@ -17,6 +17,8 @@ func TestMigrate_RunsDDL(t *testing.T) {
 	defer database.Close()
 
 	mock.ExpectExec("CREATE TABLE IF NOT EXISTS tasks").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec("ALTER TABLE tasks ADD COLUMN depends_on_id").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec("ALTER TABLE tasks ADD CONSTRAINT fk_tasks_depends_on").WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec("CREATE TABLE IF NOT EXISTS users").WillReturnResult(sqlmock.NewResult(0, 0))
 
 	if err := Migrate(context.Background(), database); err != nil {

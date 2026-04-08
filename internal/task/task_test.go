@@ -57,6 +57,24 @@ func TestValidate_uuidInvalido(t *testing.T) {
 	}
 }
 
+func TestValidate_dependsOnSelf(t *testing.T) {
+	tt := NewTask("a", "b", 5, nil)
+	id := tt.ID
+	tt.DependsOnID = &id
+	if err := tt.Validate(); err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestValidate_dependsOnInvalidUUID(t *testing.T) {
+	tt := NewTask("a", "b", 5, nil)
+	bad := "no-uuid"
+	tt.DependsOnID = &bad
+	if err := tt.Validate(); err == nil {
+		t.Fatal("expected error")
+	}
+}
+
 func TestValidate_errors(t *testing.T) {
 	cases := []struct {
 		name string

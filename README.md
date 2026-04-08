@@ -73,15 +73,18 @@ Los comandos `login`, `login --signup` y `switch` requieren las mismas variables
 
 ### Tareas (MySQL)
 
-La primera ejecucion de un subcomando `task` crea la tabla `tasks` si no existe.
+La primera ejecucion de un subcomando `task` crea la tabla `tasks` si no existe. Las migraciones posteriores añaden columnas nuevas (p. ej. `depends_on_id`) de forma idempotente.
+
+Cada tarea puede **depender de otra** (`depends_on_id`, UUID de otra fila en `tasks`). Si borras la tarea de la que se dependia, MySQL pone `depends_on_id` en NULL (`ON DELETE SET NULL`). No se permiten dependencias circulares.
 
 | Comando | Descripcion |
 |--------|-------------|
 | `task add` (sin flags) | Modo interactivo por terminal. |
-| `task add --name "..." --description "..." [--relevance N] [--due YYYY-MM-DD]` | Crea tarea (id UUID); imprime el id. |
-| `task list` | Lista ordenada: relevancia mayor primero; con fecha de entrega antes que sin fecha; entrega mas cercana primero. |
-| `task get [id]` | Detalle; sin `id` lo pide por terminal. |
-| `task update [id]` | Sin flags: modo interactivo. Con flags: actualiza solo lo indicado (`--clear-due` quita entrega). |
+| `task add --name "..." --description "..." [--relevance N] [--due YYYY-MM-DD] [--depends-on UUID]` | Crea tarea (id UUID); imprime el id. |
+| `task list` | Lista ordenada; columna **DEPENDE_DE** (nombre de la tarea padre o prefijo de UUID). |
+| `task get [id]` | Detalle; incluye `depende_de`; sin `id` lo pide por terminal. |
+| `task update [id]` | Sin flags: modo interactivo. Flags: `--depends-on`, `--clear-depends-on`, `--clear-due`, etc. |
+| `task pick` | Elige **una tarea al azar** y muestra el mismo detalle que `get`. |
 | `task delete [id]` | Elimina; sin `id` lo pide por terminal. |
 
 Ejemplo:

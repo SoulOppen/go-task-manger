@@ -28,6 +28,7 @@ var (
 	addDescription string
 	addRelevance   int
 	addDue         string
+	addDependsOn   string
 )
 
 var taskCmd = &cobra.Command{
@@ -41,7 +42,7 @@ var taskAddCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if shouldPromptAdd(cmd) {
 			var err error
-			addName, addDescription, addRelevance, addDue, err = promptAddFields(cmd.InOrStdin(), cmd.OutOrStdout())
+			addName, addDescription, addRelevance, addDue, addDependsOn, err = promptAddFields(cmd.InOrStdin(), cmd.OutOrStdout())
 			if err != nil {
 				return err
 			}
@@ -52,6 +53,9 @@ var taskAddCmd = &cobra.Command{
 			return err
 		}
 		t := task.NewTask(addName, addDescription, addRelevance, due)
+		if s := strings.TrimSpace(addDependsOn); s != "" {
+			t.DependsOnID = &s
+		}
 		if err := t.Validate(); err != nil {
 			return err
 		}
@@ -75,17 +79,30 @@ var taskListCmd = &cobra.Command{
 				return err
 			}
 			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "ID\tNOMBRE\tREL\tENTREGA\tDESCRIPCION\tCREADO")
+			fmt.Fprintln(w, "ID\tNOMBRE\tREL\tENTREGA\tDEPENDE_DE\tDESCRIPCION\tCREADO")
 			for _, t := range tasks {
 				due := "-"
 				if t.DueDate != nil {
 					due = t.DueDate.Format(task.DateLayout)
 				}
+				depCol := "-"
+				if t.DependsOnID != nil && *t.DependsOnID != "" {
+					if t.DependsOnName != "" {
+						depCol = t.DependsOnName
+					} else {
+						id := *t.DependsOnID
+						if len(id) > 8 {
+							depCol = id[:8] + "…"
+						} else {
+							depCol = id
+						}
+					}
+				}
 				desc := strings.ReplaceAll(t.Description, "\n", " ")
 				if len(desc) > 40 {
 					desc = desc[:37] + "..."
 				}
-				fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\t%s\n", t.ID, t.Name, t.Relevance, due, desc, t.CreatedAt.UTC().Format(time.RFC3339))
+				fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\t%s\t%s\n", t.ID, t.Name, t.Relevance, due, depCol, desc, t.CreatedAt.UTC().Format(time.RFC3339))
 			}
 			return w.Flush()
 		})
@@ -110,19 +127,29 @@ var taskGetCmd = &cobra.Command{
 			if t.DueDate != nil {
 				due = t.DueDate.Format(task.DateLayout)
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "id: %s\nnombre: %s\ndescripcion: %s\nrelevancia: %d\nentrega: %s\ncreado: %s\n",
-				t.ID, t.Name, t.Description, t.Relevance, due, t.CreatedAt.UTC().Format(time.RFC3339))
+			depLine := "-"
+			if t.DependsOnID != nil && *t.DependsOnID != "" {
+				if t.DependsOnName != "" {
+					depLine = fmt.Sprintf("%s (%s)", *t.DependsOnID, t.DependsOnName)
+				} else {
+					depLine = *t.DependsOnID
+				}
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "id: %s\nnombre: %s\ndescripcion: %s\nrelevancia: %d\nentrega: %s\ndepende_de: %s\ncreado: %s\n",
+				t.ID, t.Name, t.Description, t.Relevance, due, depLine, t.CreatedAt.UTC().Format(time.RFC3339))
 			return nil
 		})
 	},
 }
 
 var (
-	updName        string
-	updDescription string
-	updRelevance   int
-	updDue         string
-	updClearDue    bool
+	updName           string
+	updDescription    string
+	updRelevance      int
+	updDue            string
+	updClearDue       bool
+	updDependsOn      string
+	updClearDependsOn bool
 )
 
 var taskUpdateCmd = &cobra.Command{
@@ -165,6 +192,16 @@ var taskUpdateCmd = &cobra.Command{
 				}
 				existing.DueDate = due
 			}
+			if updClearDependsOn {
+				existing.DependsOnID = nil
+			} else if cmd.Flags().Changed("depends-on") {
+				s := strings.TrimSpace(updDependsOn)
+				if s == "" {
+					existing.DependsOnID = nil
+				} else {
+					existing.DependsOnID = &s
+				}
+			}
 			if err := existing.Validate(); err != nil {
 				return err
 			}
@@ -188,6 +225,34 @@ var taskDeleteCmd = &cobra.Command{
 	},
 }
 
+var taskPickCmd = &cobra.Command{
+	Use:   "pick",
+	Short: "Elegir una tarea al azar",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return withTaskRepo(cmd.Context(), func(repo *task.Repository) error {
+			t, err := repo.PickRandom(cmd.Context())
+			if err != nil {
+				return err
+			}
+			due := "-"
+			if t.DueDate != nil {
+				due = t.DueDate.Format(task.DateLayout)
+			}
+			depLine := "-"
+			if t.DependsOnID != nil && *t.DependsOnID != "" {
+				if t.DependsOnName != "" {
+					depLine = fmt.Sprintf("%s (%s)", *t.DependsOnID, t.DependsOnName)
+				} else {
+					depLine = *t.DependsOnID
+				}
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "id: %s\nnombre: %s\ndescripcion: %s\nrelevancia: %d\nentrega: %s\ndepende_de: %s\ncreado: %s\n",
+				t.ID, t.Name, t.Description, t.Relevance, due, depLine, t.CreatedAt.UTC().Format(time.RFC3339))
+			return nil
+		})
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(taskCmd)
 	taskCmd.AddCommand(taskAddCmd)
@@ -195,6 +260,7 @@ func init() {
 	taskAddCmd.Flags().StringVar(&addDescription, "description", "", "descripcion")
 	taskAddCmd.Flags().IntVar(&addRelevance, "relevance", 5, "relevancia 1-10")
 	taskAddCmd.Flags().StringVar(&addDue, "due", "", "fecha de entrega YYYY-MM-DD (opcional)")
+	taskAddCmd.Flags().StringVar(&addDependsOn, "depends-on", "", "UUID de la tarea de la que depende (opcional)")
 
 	taskCmd.AddCommand(taskListCmd)
 	taskCmd.AddCommand(taskGetCmd)
@@ -204,11 +270,14 @@ func init() {
 	taskUpdateCmd.Flags().IntVar(&updRelevance, "relevance", 0, "nueva relevancia 1-10")
 	taskUpdateCmd.Flags().StringVar(&updDue, "due", "", "nueva fecha YYYY-MM-DD")
 	taskUpdateCmd.Flags().BoolVar(&updClearDue, "clear-due", false, "quita fecha de entrega")
+	taskUpdateCmd.Flags().StringVar(&updDependsOn, "depends-on", "", "UUID de la tarea de la que depende")
+	taskUpdateCmd.Flags().BoolVar(&updClearDependsOn, "clear-depends-on", false, "quita dependencia de otra tarea")
 
 	taskCmd.AddCommand(taskDeleteCmd)
+	taskCmd.AddCommand(taskPickCmd)
 
 	taskCmd.SilenceUsage = true
-	for _, c := range []*cobra.Command{taskAddCmd, taskListCmd, taskGetCmd, taskUpdateCmd, taskDeleteCmd} {
+	for _, c := range []*cobra.Command{taskAddCmd, taskListCmd, taskGetCmd, taskUpdateCmd, taskDeleteCmd, taskPickCmd} {
 		c.SilenceUsage = true
 	}
 }
@@ -217,7 +286,8 @@ func shouldPromptAdd(cmd *cobra.Command) bool {
 	return !cmd.Flags().Changed("name") &&
 		!cmd.Flags().Changed("description") &&
 		!cmd.Flags().Changed("relevance") &&
-		!cmd.Flags().Changed("due")
+		!cmd.Flags().Changed("due") &&
+		!cmd.Flags().Changed("depends-on")
 }
 
 func shouldPromptUpdate(cmd *cobra.Command) bool {
@@ -225,7 +295,9 @@ func shouldPromptUpdate(cmd *cobra.Command) bool {
 		!cmd.Flags().Changed("description") &&
 		!cmd.Flags().Changed("relevance") &&
 		!cmd.Flags().Changed("due") &&
-		!cmd.Flags().Changed("clear-due")
+		!cmd.Flags().Changed("clear-due") &&
+		!cmd.Flags().Changed("depends-on") &&
+		!cmd.Flags().Changed("clear-depends-on")
 }
 
 func resolveTaskID(args []string, in io.Reader, out io.Writer) (string, error) {
@@ -242,25 +314,29 @@ func resolveTaskID(args []string, in io.Reader, out io.Writer) (string, error) {
 	return id, nil
 }
 
-func promptAddFields(in io.Reader, out io.Writer) (name, description string, relevance int, due string, err error) {
+func promptAddFields(in io.Reader, out io.Writer) (name, description string, relevance int, due, dependsOn string, err error) {
 	reader := bufio.NewReader(in)
 	name, err = promptLine(reader, out, "Nombre")
 	if err != nil {
-		return "", "", 0, "", err
+		return "", "", 0, "", "", err
 	}
 	description, err = promptLine(reader, out, "Descripcion")
 	if err != nil {
-		return "", "", 0, "", err
+		return "", "", 0, "", "", err
 	}
 	relevance, err = promptInt(reader, out, "Relevancia (1-10, default 5)", 5)
 	if err != nil {
-		return "", "", 0, "", err
+		return "", "", 0, "", "", err
 	}
 	due, err = promptLine(reader, out, "Fecha de entrega YYYY-MM-DD (opcional)")
 	if err != nil {
-		return "", "", 0, "", err
+		return "", "", 0, "", "", err
 	}
-	return name, description, relevance, due, nil
+	dependsOn, err = promptLine(reader, out, "UUID tarea de la que depende (opcional, Enter si ninguna)")
+	if err != nil {
+		return "", "", 0, "", "", err
+	}
+	return name, description, relevance, due, dependsOn, nil
 }
 
 func promptUpdateFields(current *task.Task, in io.Reader, out io.Writer) error {
@@ -307,6 +383,24 @@ func promptUpdateFields(current *task.Task, in io.Reader, out io.Writer) error {
 			return err
 		}
 		current.DueDate = due
+	}
+
+	curDep := "-"
+	if current.DependsOnID != nil && *current.DependsOnID != "" {
+		curDep = *current.DependsOnID
+	}
+	depInput, err := promptLine(reader, out, fmt.Sprintf("UUID depende_de [%s] (Enter mantener, '-' quitar)", curDep))
+	if err != nil {
+		return err
+	}
+	switch strings.TrimSpace(depInput) {
+	case "":
+		// keep
+	case "-":
+		current.DependsOnID = nil
+	default:
+		s := strings.TrimSpace(depInput)
+		current.DependsOnID = &s
 	}
 	return nil
 }

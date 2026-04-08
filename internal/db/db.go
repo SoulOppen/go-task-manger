@@ -3,12 +3,15 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/SoulOppen/task-manager-go/internal/config"
 
-	_ "github.com/go-sql-driver/mysql"
+	mysqldriver "github.com/go-sql-driver/mysql"
+
+	_ "github.com/go-sql-driver/mysql" // registro del driver "mysql"
 )
 
 const migrateTasksSQL = `CREATE TABLE IF NOT EXISTS tasks (
@@ -17,7 +20,9 @@ const migrateTasksSQL = `CREATE TABLE IF NOT EXISTS tasks (
   description TEXT NOT NULL,
   relevance TINYINT NOT NULL,
   created_at DATETIME(6) NOT NULL,
-  due_date DATE NULL
+  due_date DATE NULL,
+  depends_on_id CHAR(36) NULL,
+  CONSTRAINT fk_tasks_depends_on FOREIGN KEY (depends_on_id) REFERENCES tasks(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
 
 const migrateUsersSQL = `CREATE TABLE IF NOT EXISTS users (
@@ -28,13 +33,40 @@ const migrateUsersSQL = `CREATE TABLE IF NOT EXISTS users (
   quick_connect_reset_date DATE NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
 
-// Migrate crea tablas tasks y users si no existen.
+// Migrate crea tablas tasks y users si no existen y aplica migraciones incrementales idempotentes.
 func Migrate(ctx context.Context, db *sql.DB) error {
 	if _, err := db.ExecContext(ctx, migrateTasksSQL); err != nil {
 		return fmt.Errorf("tasks: %w", err)
 	}
+	if err := migrateTasksDependsOn(ctx, db); err != nil {
+		return err
+	}
 	if _, err := db.ExecContext(ctx, migrateUsersSQL); err != nil {
 		return fmt.Errorf("users: %w", err)
+	}
+	return nil
+}
+
+func isMySQLDuplicateDDL(err error) bool {
+	var me *mysqldriver.MySQLError
+	if errors.As(err, &me) {
+		switch me.Number {
+		case 1060, 1061, 1826: // columna/índice/FK duplicado
+			return true
+		}
+	}
+	return false
+}
+
+// migrateTasksDependsOn añade depends_on_id y FK en bases creadas antes de esa columna (CREATE IF NOT EXISTS no actualiza esquema).
+func migrateTasksDependsOn(ctx context.Context, db *sql.DB) error {
+	if _, err := db.ExecContext(ctx, `ALTER TABLE tasks ADD COLUMN depends_on_id CHAR(36) NULL`); err != nil && !isMySQLDuplicateDDL(err) {
+		return fmt.Errorf("tasks depends_on_id: %w", err)
+	}
+	if _, err := db.ExecContext(ctx,
+		`ALTER TABLE tasks ADD CONSTRAINT fk_tasks_depends_on FOREIGN KEY (depends_on_id) REFERENCES tasks(id) ON DELETE SET NULL`,
+	); err != nil && !isMySQLDuplicateDDL(err) {
+		return fmt.Errorf("tasks fk depends_on: %w", err)
 	}
 	return nil
 }

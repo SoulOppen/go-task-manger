@@ -27,13 +27,13 @@ func TestResolveTaskID_FromPrompt(t *testing.T) {
 }
 
 func TestPromptAddFields(t *testing.T) {
-	in := strings.NewReader("Tarea X\nDescripcion X\n8\n2026-04-30\n")
-	name, desc, rel, due, err := promptAddFields(in, &bytes.Buffer{})
+	in := strings.NewReader("Tarea X\nDescripcion X\n8\n2026-04-30\n550e8400-e29b-41d4-a716-446655440001\n")
+	name, desc, rel, due, dep, err := promptAddFields(in, &bytes.Buffer{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if name != "Tarea X" || desc != "Descripcion X" || rel != 8 || due != "2026-04-30" {
-		t.Fatalf("unexpected values: %q %q %d %q", name, desc, rel, due)
+	if name != "Tarea X" || desc != "Descripcion X" || rel != 8 || due != "2026-04-30" || dep != "550e8400-e29b-41d4-a716-446655440001" {
+		t.Fatalf("unexpected values: %q %q %d %q %q", name, desc, rel, due, dep)
 	}
 }
 

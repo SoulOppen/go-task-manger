@@ -27,7 +27,7 @@ func TestRepository_Create(t *testing.T) {
 	}
 
 	mock.ExpectExec("INSERT INTO tasks").
-		WithArgs(tt.ID, tt.Name, tt.Description, tt.Relevance, tt.CreatedAt, nil).
+		WithArgs(tt.ID, tt.Name, tt.Description, tt.Relevance, tt.CreatedAt, nil, nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if err := repo.Create(context.Background(), tt); err != nil {
@@ -47,10 +47,10 @@ func TestRepository_ListOrdered(t *testing.T) {
 
 	repo := NewRepository(db)
 	ct := time.Date(2026, 3, 30, 12, 0, 0, 0, time.UTC)
-	rows := sqlmock.NewRows([]string{"id", "name", "description", "relevance", "created_at", "due_date"}).
-		AddRow("550e8400-e29b-41d4-a716-446655440000", "n", "d", 8, ct, nil)
+	rows := sqlmock.NewRows([]string{"id", "name", "description", "relevance", "created_at", "due_date", "depends_on_id", "name"}).
+		AddRow("550e8400-e29b-41d4-a716-446655440000", "n", "d", 8, ct, nil, nil, nil)
 
-	mock.ExpectQuery("SELECT (.+) FROM tasks ORDER BY relevance DESC").
+	mock.ExpectQuery("SELECT (.+) FROM tasks t").
 		WillReturnRows(rows)
 
 	list, err := repo.ListOrdered(context.Background())
