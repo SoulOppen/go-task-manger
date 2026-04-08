@@ -277,7 +277,7 @@ func init() {
 	taskCmd.AddCommand(taskPickCmd)
 
 	taskCmd.SilenceUsage = true
-	for _, c := range []*cobra.Command{taskAddCmd, taskListCmd, taskGetCmd, taskUpdateCmd, taskDeleteCmd, taskPickCmd} {
+	for _, c := range []*cobra.Command{taskAddCmd, taskListCmd, taskGetCmd, taskUpdateCmd, taskDeleteCmd, taskPickCmd, taskAddPromptCmd} {
 		c.SilenceUsage = true
 	}
 }

@@ -4,3 +4,9 @@ DB_PORT=3306
 DB_USER=tu_usuario
 DB_PASSWORD=tu_password
 DB_NAME=tu_base_de_datos
+
+# Opcional: comando `gtm task add-prompt` (LLM)
+# GTM_LLM_PROVIDER=gemini
+# GTM_LLM_API_KEY=
+# GTM_LLM_MODEL=gemini-2.0-flash
+# Para APIs tipo OpenAI (OpenAI, compatibles): GTM_LLM_PROVIDER=openai y opcional GTM_LLM_BASE_URL=https://api.openai.com/v1

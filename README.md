@@ -86,12 +86,19 @@ Cada tarea puede **depender de otra** (`depends_on_id`, UUID de otra fila en `ta
 | `task update [id]` | Sin flags: modo interactivo. Flags: `--depends-on`, `--clear-depends-on`, `--clear-due`, etc. |
 | `task pick` | Elige **una tarea al azar** y muestra el mismo detalle que `get`. |
 | `task delete [id]` | Elimina; sin `id` lo pide por terminal. |
+| `task add-prompt` | Crea una o varias tareas a partir de texto libre usando un **LLM** (Gemini u OpenAI-compatible). Variables `GTM_LLM_API_KEY`, `GTM_LLM_PROVIDER` (`gemini` o `openai`), `GTM_LLM_MODEL`; opcional `GTM_LLM_BASE_URL` para endpoints compatibles con OpenAI. Salida: un UUID por linea. No subas la API key al repositorio. |
 
 Ejemplo:
 
 ```bash
 ./bin/gtm task add --name "Reunion" --description "Cliente X" --relevance 8 --due 2026-04-15
 ./bin/gtm task list
+```
+
+Con LLM configurado en `.env` (`GTM_LLM_API_KEY`, etc.):
+
+```bash
+./bin/gtm task add-prompt --prompt "Recordatorio: revisar informe el viernes; relevancia alta"
 ```
 
 Con el binario en PATH (tras el instalador, ver arriba): `gtm -v` y `gtm task list` desde cualquier directorio.
