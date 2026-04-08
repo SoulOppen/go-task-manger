@@ -1,6 +1,8 @@
 📝 Go Task Manager (GTM)
 ========================
 
+[![CI](https://github.com/SoulOppen/go-task-manger/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SoulOppen/go-task-manger/actions/workflows/ci.yml) [![Go](https://img.shields.io/github/go-mod/go-version/SoulOppen/go-task-manger?filename=go.mod&logo=go&label=Go)](https://github.com/SoulOppen/go-task-manger/blob/main/go.mod) [![GitHub](https://img.shields.io/badge/GitHub-Repositorio-181717?logo=github)](https://github.com/SoulOppen/go-task-manger)
+
 ![Banner GTM — Go Task Manager](docs/images/gtm-banner.png)
 
 **Go Task Manager** es una herramienta de línea de comandos (CLI) ligera y rápida diseñada para ayudarte a organizar tu flujo de trabajo diario sin salir de la terminal.
