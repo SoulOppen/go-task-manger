@@ -30,7 +30,7 @@ type Config struct {
 func ConfigFromEnv() (Config, error) {
 	key := strings.TrimSpace(os.Getenv(envAPIKey))
 	if key == "" {
-		return Config{}, fmt.Errorf("%w: %s esta vacia o no definida; definala en .env o en el entorno (vea .envExample)", ErrLLMNotConfigured, envAPIKey)
+		return Config{}, fmt.Errorf("%w: %s está vacía o no definida; defínala en .env o en el entorno (vea .envExample)", ErrLLMNotConfigured, envAPIKey)
 	}
 	prov := strings.TrimSpace(os.Getenv(envProvider))
 	model := strings.TrimSpace(os.Getenv(envModel))

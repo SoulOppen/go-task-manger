@@ -86,7 +86,7 @@ Cada tarea puede **depender de otra** (`depends_on_id`, UUID de otra fila en `ta
 | `task update [id]` | Sin flags: modo interactivo. Flags: `--depends-on`, `--clear-depends-on`, `--clear-due`, etc. |
 | `task pick` | Elige **una tarea al azar** y muestra el mismo detalle que `get`. |
 | `task delete [id]` | Elimina; sin `id` lo pide por terminal. |
-| `task add-prompt` | Crea una o varias tareas a partir de texto libre usando un **LLM** (Gemini u OpenAI-compatible). Obligatorios: `GTM_LLM_API_KEY`, `GTM_LLM_PROVIDER` (`gemini` o `openai`) y `GTM_LLM_MODEL` (en `.env` o equivalente via `--llm-provider` / `--llm-model`); el binario no asigna modelo ni proveedor por defecto. Opcional: `GTM_LLM_BASE_URL`. Salida: un UUID por linea. No subas la API key al repositorio. |
+| `task add-prompt` | Crea una o varias tareas a partir de texto libre usando un **LLM** (Gemini u OpenAI-compatible). Obligatorios: `GTM_LLM_API_KEY`, `GTM_LLM_PROVIDER` (`gemini` o `openai`) y `GTM_LLM_MODEL` (en `.env` o equivalente mediante `--llm-provider` / `--llm-model`); el binario no asigna modelo ni proveedor por defecto. Opcional: `GTM_LLM_BASE_URL`. Salida: un UUID por linea. No subas la API key al repositorio. |
 
 Ejemplo:
 

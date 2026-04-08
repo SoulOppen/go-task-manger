@@ -6,7 +6,7 @@ DB_PASSWORD=tu_password
 DB_NAME=tu_base_de_datos
 
 # Comando `gtm task add-prompt` (LLM): sin valores por defecto en el binario.
-# Obligatorios: API key, proveedor y modelo (en .env o via --llm-provider / --llm-model).
+# Obligatorios: API key, proveedor y modelo (en .env o mediante --llm-provider / --llm-model).
 # GTM_LLM_API_KEY=
 # GTM_LLM_PROVIDER=gemini
 # GTM_LLM_MODEL=gemini-2.0-flash
